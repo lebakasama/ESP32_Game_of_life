@@ -1,7 +1,7 @@
 [package]
 edition      = "2024"
 name         = "game_of_life"
-rust-version = "1.88"
+rust-version = "1.98"
 version      = "0.1.0"
 license      = "MIT"
 
