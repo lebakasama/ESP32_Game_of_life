@@ -1,5 +1,4 @@
 use esp_hal::rng::Rng;
-use heapless::Vec;
 use log::warn;
 
 const NUM_ROWS: usize = 21;
@@ -20,6 +19,13 @@ pub struct GolCoords {
 }
 
 impl GolCoords {
+    pub fn new() -> Self {
+        Self {
+            row: 0,
+            col: 0,
+        }
+    }
+
     pub fn from_index(index: usize) -> Self {
         Self {
             row: index / NUM_COLS,
@@ -94,27 +100,30 @@ impl GolGrid {
 
 pub struct GameOfLife {
     gol_grid: GolGrid,
-    updated: Vec<GolCoords, GRID_LEN>,
+    //updated: Vec<GolCoords, GRID_LEN>,
+    updated: [GolCoords; GRID_LEN],
+    num_updated: usize,
 }
 
 impl GameOfLife {
     pub fn new() -> Self {
         let mut new_obj = Self {
             gol_grid: GolGrid::new_random(&Rng::new()),
-            updated: Vec::new(),
+            updated: core::array::from_fn(|_| GolCoords::new()),
+            num_updated: 0,
         };
 
         for i in 0..GRID_LEN {
             if new_obj.gol_grid.state[i] {
-                new_obj.updated.push(GolCoords::from_index(i)).expect("Push to vec failed");
+                new_obj.updated[new_obj.num_updated] = GolCoords::from_index(i);
             }
         }
 
         new_obj
     }
 
-    pub fn updated(&self) -> &Vec<GolCoords, GRID_LEN> {
-        &self.updated
+    pub fn updated(&self) -> &[GolCoords] {
+        &self.updated[0..self.num_updated]
     }
 
     pub fn dimensions(&self) -> (usize, usize) {
@@ -125,23 +134,33 @@ impl GameOfLife {
         self.gol_grid.state[rc_to_i(row as i16, col as i16)]
     }
 
+    fn push_updated_cell(&mut self, index: usize) {
+        // I don't check for overflow because I like to live dangerously.
+        // Also because the array can contain the total number of cells, so it shouldn't happen.
+        // This makes things slightly faster.
+        self.updated[self.num_updated] = GolCoords::from_index(index);
+        self.num_updated += 1;
+    }
+
+    fn reset_updated_cells(&mut self) {
+        self.num_updated = 0;
+    }
+
     pub fn update(&mut self) {
-        self.updated.clear();
+        self.reset_updated_cells();
 
         for i in 0..GRID_LEN {
             if self.gol_grid.state[i] {
                 // Cell is alive
                 if self.gol_grid.num_neighbours[i] < 2 || self.gol_grid.num_neighbours[i] > 3 {
                     self.gol_grid.kill(i); 
-                    self.updated.push(GolCoords::from_index(i))
-                        .expect("Failed push to updated cells");
+                    self.push_updated_cell(i);
                 }
             } else {
                 // Cell is dead
                 if self.gol_grid.num_neighbours[i] == 3 {
                     self.gol_grid.spawn(i);
-                    self.updated.push(GolCoords::from_index(i))
-                        .expect("Failed push to updated cells");
+                    self.push_updated_cell(i);
                 }
             }
 
