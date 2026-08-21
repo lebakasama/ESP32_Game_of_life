@@ -16,23 +16,27 @@ fn i_to_rc(index: usize) -> (usize, usize) {
 
 #[derive(Debug)] 
 pub struct GolCoords {
-    pub row: usize,
-    pub col: usize,
+    pub row: i32,
+    pub col: i32,
 }
 
 impl GolCoords {
-    pub fn new() -> Self {
+    pub fn new(row: i32, col: i32) -> Self {
         Self {
-            row: 0,
-            col: 0,
+            row,
+            col,
         }
     }
 
     pub fn from_index(index: usize) -> Self {
         Self {
-            row: index / NUM_COLS,
-            col: index % NUM_COLS,
+            row: (index / NUM_COLS) as i32,
+            col: (index % NUM_COLS) as i32,
         }
+    }
+
+    pub fn to_index(&self) -> usize {
+        ((self.row * NUM_COLS as i32) + self.col) as usize
     }
 }
 
@@ -116,7 +120,7 @@ impl GameOfLife {
     pub fn new() -> Self {
         let mut new_obj = Self {
             gol_grid: GolGrid::new_random(&Rng::new()),
-            updated: core::array::from_fn(|_| GolCoords::new()),
+            updated: core::array::from_fn(|_| GolCoords::new(0, 0)),
             num_updated: 0,
         };
 
@@ -137,8 +141,8 @@ impl GameOfLife {
         (NUM_ROWS, NUM_COLS)
     }
 
-    pub fn alive(&self, row: usize, col: usize) -> bool {
-        self.gol_grid.state[rc_to_i(row, col)]
+    pub fn alive(&self, coords: &GolCoords) -> bool {
+        self.gol_grid.state[coords.to_index()]
     }
 
     fn push_updated_cell(&mut self, index: usize) {

@@ -88,7 +88,9 @@ fn main() -> ! {
     let (num_rows, num_cols) = gol.dimensions();
 
     delay = Delay::new();
-    let cell_size = (DISPLAY_WIDTH / num_rows as u16).min(DISPLAY_HEIGHT / num_cols as u16);
+    let cell_size = (DISPLAY_WIDTH as u32 / num_rows as u32)
+                        .min(DISPLAY_HEIGHT as u32 / num_cols as u32);
+    let cell_size_i32 = cell_size as i32;
 
     // Draw something
     display.clear(Rgb565::BLACK).unwrap();
@@ -97,11 +99,11 @@ fn main() -> ! {
         // screen
         let updated = gol.updated();
 
-        for coord in updated {
-            let colour = if gol.alive(coord.row, coord.col) {Rgb565::RED} else {Rgb565::BLACK};
+        for coords in updated {
+            let colour = if gol.alive(coords) {Rgb565::RED} else {Rgb565::BLACK};
 
-            Rectangle::new(Point::new(coord.row as i32 * cell_size as i32,
-                                      coord.col as i32 * cell_size as i32),
+            Rectangle::new(Point::new(coords.row * cell_size_i32,
+                                      coords.col * cell_size_i32),
                             Size::new(cell_size as u32, cell_size as u32))
                     .into_styled(PrimitiveStyle::with_fill(colour))
                     .draw(&mut display)
