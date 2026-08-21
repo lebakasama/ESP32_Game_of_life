@@ -6,10 +6,12 @@ const NUM_COLS: usize = 40;
 const GRID_LEN: usize = NUM_ROWS * NUM_COLS;
 
 // Row / column to linear index, wrapping
-fn rc_to_i(row: i16, col: i16) -> usize {
-    let num_rows = NUM_ROWS as i16;
-    let num_cols = NUM_COLS as i16;
-    ((row.rem_euclid(num_rows) * num_cols) + col.rem_euclid(num_cols)) as usize
+fn rc_to_i(row: usize, col: usize) -> usize {
+    ((row % NUM_ROWS) * NUM_COLS) + (col % NUM_COLS)
+}
+
+fn i_to_rc(index: usize) -> (usize, usize) {
+    (index / NUM_COLS, index % NUM_COLS)
 }
 
 #[derive(Debug)] 
@@ -67,16 +69,21 @@ impl GolGrid {
     }
 
     fn add_to_neighbours(&mut self, index: usize, val: i8) {
-        let row = (index / NUM_COLS) as i16;
-        let col = (index % NUM_COLS) as i16;
-        self.num_neighbours_cache[ rc_to_i(row-1, col-1) ] += val;
-        self.num_neighbours_cache[ rc_to_i(row-1, col  ) ] += val;
-        self.num_neighbours_cache[ rc_to_i(row-1, col+1) ] += val;
-        self.num_neighbours_cache[ rc_to_i(row  , col-1) ] += val;
-        self.num_neighbours_cache[ rc_to_i(row  , col+1) ] += val;
-        self.num_neighbours_cache[ rc_to_i(row+1, col-1) ] += val;
-        self.num_neighbours_cache[ rc_to_i(row+1, col  ) ] += val;
-        self.num_neighbours_cache[ rc_to_i(row+1, col+1) ] += val;
+        let row = index / NUM_COLS;
+        let col = index % NUM_COLS;
+        let prev_row = if row == 0 {NUM_ROWS - 1} else {row - 1};
+        let next_row = (row + 1) % NUM_ROWS;
+        let prev_col = if col == 0 {NUM_COLS - 1} else {col - 1};
+        let next_col = (col + 1) % NUM_COLS;
+
+        self.num_neighbours_cache[ rc_to_i(prev_row, prev_col) ] += val;
+        self.num_neighbours_cache[ rc_to_i(prev_row, col     ) ] += val;
+        self.num_neighbours_cache[ rc_to_i(prev_row, next_col) ] += val;
+        self.num_neighbours_cache[ rc_to_i(row  , prev_col) ] += val;
+        self.num_neighbours_cache[ rc_to_i(row  , next_col) ] += val;
+        self.num_neighbours_cache[ rc_to_i(next_row, prev_col) ] += val;
+        self.num_neighbours_cache[ rc_to_i(next_row, col  ) ] += val;
+        self.num_neighbours_cache[ rc_to_i(next_row, next_col) ] += val;
     }
 
     pub fn kill(&mut self, i: usize) {
@@ -131,13 +138,12 @@ impl GameOfLife {
     }
 
     pub fn alive(&self, row: usize, col: usize) -> bool {
-        self.gol_grid.state[rc_to_i(row as i16, col as i16)]
+        self.gol_grid.state[rc_to_i(row, col)]
     }
 
     fn push_updated_cell(&mut self, index: usize) {
         // I don't check for overflow because I like to live dangerously.
         // Also because the array can contain the total number of cells, so it shouldn't happen.
-        // This makes things slightly faster.
         self.updated[self.num_updated] = GolCoords::from_index(index);
         self.num_updated += 1;
     }
