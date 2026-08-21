@@ -10,10 +10,6 @@ fn rc_to_i(row: usize, col: usize) -> usize {
     ((row % NUM_ROWS) * NUM_COLS) + (col % NUM_COLS)
 }
 
-fn i_to_rc(index: usize) -> (usize, usize) {
-    (index / NUM_COLS, index % NUM_COLS)
-}
-
 #[derive(Debug)] 
 pub struct GolCoords {
     pub row: i32,
@@ -137,8 +133,8 @@ impl GameOfLife {
         &self.updated[0..self.num_updated]
     }
 
-    pub fn dimensions(&self) -> (usize, usize) {
-        (NUM_ROWS, NUM_COLS)
+    pub fn dimensions(&self) -> (u32, u32) {
+        (NUM_ROWS as u32, NUM_COLS as u32)
     }
 
     pub fn alive(&self, coords: &GolCoords) -> bool {

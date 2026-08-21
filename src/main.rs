@@ -88,8 +88,8 @@ fn main() -> ! {
     let (num_rows, num_cols) = gol.dimensions();
 
     delay = Delay::new();
-    let cell_size = (DISPLAY_WIDTH as u32 / num_rows as u32)
-                        .min(DISPLAY_HEIGHT as u32 / num_cols as u32);
+    let cell_size = (DISPLAY_WIDTH as u32 / num_rows)
+                        .min(DISPLAY_HEIGHT as u32 / num_cols);
     let cell_size_i32 = cell_size as i32;
 
     // Draw something
