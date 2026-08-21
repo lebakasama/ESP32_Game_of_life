@@ -30,7 +30,6 @@ impl GolCoords {
 
 struct GolGrid {
     state: [bool; GRID_LEN],
-    state_cache: [bool; GRID_LEN],
     num_neighbours: [i8; GRID_LEN],
     num_neighbours_cache: [i8; GRID_LEN],
 }
@@ -42,7 +41,6 @@ impl GolGrid {
         
         let mut new_obj = Self {
             state: state.clone(),
-            state_cache: state,
             num_neighbours: [0_i8; GRID_LEN],
             num_neighbours_cache: [0_i8; GRID_LEN],
         };
@@ -77,20 +75,19 @@ impl GolGrid {
 
     pub fn kill(&mut self, i: usize) {
         if self.state[i] == true {
-            self.state_cache[i] = false;
+            self.state[i] = false;
             self.add_to_neighbours(i, -1);
         }
     }
 
     pub fn spawn(&mut self, i: usize) {
         if self.state[i] == false {
-            self.state_cache[i] = true;
+            self.state[i] = true;
             self.add_to_neighbours(i, 1);
         }
     }
 
     pub fn swap_cache(&mut self) {
-        self.state = self.state_cache;
         self.num_neighbours = self.num_neighbours_cache;
     }
 }
